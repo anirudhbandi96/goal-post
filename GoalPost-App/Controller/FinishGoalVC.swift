@@ -31,12 +31,15 @@ class FinishGoalVC: UIViewController, UITextFieldDelegate {
 
     @IBAction func createGoalBtnWasPressed(_ sender: Any) {
         //pass data into core data model
-        if pointsTextField.text != "" {
+        if pointsTextField.text != "" && pointsTextField.text != "0"{
         self.save { (complete) in
             if complete {
                 dismiss(animated: true, completion: nil)
             }
         }
+        }
+        else {
+            createGoalBtn.wiggle()
         }
         
     }

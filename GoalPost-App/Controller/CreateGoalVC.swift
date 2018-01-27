@@ -45,6 +45,9 @@ class CreateGoalVC: UIViewController, UITextViewDelegate {
             presentingViewController?.presentSecondaryDetail(finishGoalVC)
 
         }
+        else {
+            self.nextbtn.wiggle()
+        }
     }
     
     @IBAction func shortTermBtnWasPressed(_ sender: Any) {

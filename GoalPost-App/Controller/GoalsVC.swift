@@ -25,6 +25,7 @@ class GoalsVC: UIViewController {
     var deletedGoalProgress: Int32?
     var deleltedGoalCompletionValue: Int32?
     
+    var undoViewBottomAnchorConstraint: NSLayoutConstraint?
     
     @IBAction func addGoalBtnPressed(_ sender: Any) {
         
@@ -45,64 +46,111 @@ class GoalsVC: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        print("view appeared")
         fetchCoreDataObjects()
     }
 
     func fetchCoreDataObjects(){
-        print("entered fetch data")
         self.fetch { (complete) in
-            print("completed")
             if complete{
                 if goals.count > 0{
-                    print("table reloaded")
                     tableView.isHidden = false
                     tableView.reloadData()
                 } else {
-                    print("table empty")
                     tableView.isHidden = true
                 }
             }
         }
     }
     
+    func animateUndoView(){
+        
+        UIView.animate(withDuration: 0.3) {
+            self.undoViewBottomAnchorConstraint?.constant = -20
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    func removeUndoView(){
+        
+        UIView.animate(withDuration: 0.3) {
+            self.undoViewBottomAnchorConstraint?.constant = 80
+            self.view.layoutIfNeeded()
+        }
+    }
+    
     func addUndoView(){
-        let x = CGFloat(10)
-        undoView = UIView(frame: CGRect(x: x, y: UIScreen.main.bounds.height-60, width: UIScreen.main.bounds.width - 2*x, height: 50))
+        
+        undoView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 50))
+        undoView.translatesAutoresizingMaskIntoConstraints = false
+        self.view.addSubview(undoView)
+
         undoView.backgroundColor = UIColor.red
         undoView.layer.cornerRadius = 10.0
         undoView.layer.masksToBounds = true
-        self.view.addSubview(undoView)
+        
+        let margins = view.layoutMarginsGuide
+        
+        undoView.leadingAnchor.constraint(equalTo: margins.leadingAnchor).isActive = true
+        undoView.trailingAnchor.constraint(equalTo: margins.trailingAnchor).isActive = true
+        undoViewBottomAnchorConstraint = undoView.bottomAnchor.constraint(equalTo: margins.bottomAnchor, constant: 80)
+        undoViewBottomAnchorConstraint?.isActive = true
+        undoView.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        
         
         let labelHeight: CGFloat = 50
         let labelWidth: CGFloat = 150
-        let label = UILabel(frame: CGRect(x: 10, y: undoView.frame.height/2 - labelHeight/2, width: labelWidth, height: labelHeight))
+        let label = UILabel(frame: CGRect(x: 0, y: 0, width: labelWidth, height: labelHeight))
+        label.translatesAutoresizingMaskIntoConstraints = false
+        self.undoView.addSubview(label)
+        
         label.text = "Goal Removed"
         label.font = UIFont(name: "AvenirNext-Medium", size: 15)
-        label.textColor = UIColor.white
-        undoView.addSubview(label)
+        label.textColor = UIColor.black
+
+        label.leadingAnchor.constraint(equalTo: undoView.leadingAnchor, constant: 25).isActive = true
+        label.centerYAnchor.constraint(equalTo: undoView.centerYAnchor).isActive = true
+        label.heightAnchor.constraint(equalToConstant: labelHeight)
+        label.widthAnchor.constraint(equalToConstant: labelWidth)
+
         
-        let buttonHeight: CGFloat = 30
-        let buttonWidth: CGFloat = 55
-        let undoButton = UIButton(frame: CGRect(x: undoView.frame.width-buttonWidth-5, y: undoView.frame.height/2-buttonHeight/2, width: buttonWidth, height: buttonHeight))
+        
+        let buttonHeight: CGFloat = 20
+        let buttonWidth: CGFloat = 50
+        let undoButton = UIButton(frame: CGRect(x: 0, y: 0, width: buttonWidth, height: buttonHeight))
+        
+        undoButton.translatesAutoresizingMaskIntoConstraints = false
+        undoView.addSubview(undoButton)
+        
         undoButton.backgroundColor = UIColor.clear
-        undoButton.setTitleColor(UIColor.white, for: .normal)
+        undoButton.setTitleColor(UIColor.black, for: .normal)
         undoButton.setTitle("UNDO", for: .normal)
         undoButton.titleLabel?.font = UIFont(name: "AvenirNext-Medium", size: 15)
         
+        undoButton.trailingAnchor.constraint(equalTo: undoView.trailingAnchor, constant: -10).isActive = true
+        undoButton.widthAnchor.constraint(equalToConstant: buttonWidth).isActive = true
+        undoButton.heightAnchor.constraint(equalToConstant: buttonHeight).isActive = true
+        undoButton.centerYAnchor.constraint(equalTo: undoView.centerYAnchor).isActive = true
+
         undoButton.addTarget(self, action:#selector(undoButtonTapped), for: .touchUpInside)
+
+        let cancelButton = UIButton(frame: CGRect(x:0 , y: 0, width: buttonWidth + 20, height: buttonHeight))
         
-        let cancelButton = UIButton(frame: CGRect(x:undoView.frame.width-buttonWidth-25-undoButton.frame.width , y: undoView.frame.height/2-buttonHeight/2, width: buttonWidth + 20, height: buttonHeight))
+        cancelButton.translatesAutoresizingMaskIntoConstraints = false
+        undoView.addSubview(cancelButton)
+        
         cancelButton.backgroundColor = UIColor.clear
-        cancelButton.setTitleColor(UIColor.white, for: .normal)
+        cancelButton.setTitleColor(UIColor.black, for: .normal)
         cancelButton.setTitle("CANCEL", for: .normal)
         cancelButton.titleLabel?.font = UIFont(name: "AvenirNext-Medium", size: 15)
-        
+
         cancelButton.addTarget(self, action:#selector(cancelButtonTapped), for: .touchUpInside)
+
+        cancelButton.trailingAnchor.constraint(equalTo: undoButton.leadingAnchor, constant: -10).isActive = true
+        cancelButton.centerYAnchor.constraint(equalTo: undoView.centerYAnchor).isActive = true
+        cancelButton.widthAnchor.constraint(equalToConstant: buttonWidth+15).isActive = true
+        cancelButton.heightAnchor.constraint(equalToConstant: buttonHeight).isActive = true
         
-        undoView.addSubview(cancelButton)
-        undoView.addSubview(undoButton)
-        undoView.isHidden = true
+        //undoView.isHidden = true
         
     }
     @objc func undoButtonTapped(){
@@ -118,7 +166,7 @@ class GoalsVC: UIViewController {
             try managedContext.save()
             print("Successfully saved data.")
             fetchCoreDataObjects()
-            undoView.isHidden = true
+            removeUndoView()
             setDeletedGoalToNil()
         }catch {
             debugPrint("Could Not Save: \(error.localizedDescription)")
@@ -130,8 +178,7 @@ class GoalsVC: UIViewController {
     }
     
     @objc func cancelButtonTapped(){
-
-        undoView.isHidden = true
+        self.removeUndoView()
         setDeletedGoalToNil()
 }
     
@@ -168,7 +215,7 @@ extension GoalsVC: UITableViewDelegate , UITableViewDataSource {
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         let deleteAction = UITableViewRowAction(style: .destructive, title: "DELETE") { (rowAction, indexPath) in
            
-            self.undoView.isHidden = false
+            self.animateUndoView()
             self.deletedRow = indexPath.row
             tableView.beginUpdates()
             let goal = self.goals[indexPath.row]
@@ -235,7 +282,6 @@ extension GoalsVC {
         let fetchRequest = NSFetchRequest<Goal>(entityName: "Goal")
         
         do{
-            print("inside do")
             goals = try managedContext.fetch(fetchRequest)
             completion(true)
         } catch {
